@@ -1,0 +1,38 @@
+definitions:
+• block – a filled space on the board
+• hole – an unfilled space that is located below a filled
+space
+• pit – an unfilled space that is not a hole and has a
+filled space (or the board edge) on its left and right
+• column height – the row where a column's highest
+block is located
+
+
+Let it run the move, then let it fall in test run, evaluate the impact then next move
+
+
+
+The M features are as follows:
+• WeightedBlocks – weighted sum of blocks, where a
+block's weight is the row it's on
+• Roughness – sum of absolute difference between
+adjacent column heights
+• ClearableLine – maximum number of lines
+potentially clearable by a single I (straight) piece
+• LinesCleared – number of lines currently cleared
+during the game
+
+
+• ConnectedHoles – number of vertically connected
+holes
+• Tetrises – number of tetrises currently made during
+the game
+• PitHolePercent – number of pits / (number of pits +
+number of holes)
+• DeepestWell – the row containing the lowest unfilled
+block that is not a hole
+• Blocks – number of blocks on the board
+• ColHoles – number of columns containing at least one
+hole
+
+

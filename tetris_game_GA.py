@@ -46,8 +46,8 @@ shapes = [S, Z, I, O, J, L, T ,P]
 shape_rotation = [(S, 2), (Z, 2), (I, 2), (O, 1), (J, 4), (L, 4), (T, 4), (P, 1)]
 shape_colors = [(255, 60, 60), (255, 150, 60), (255, 255, 50), (160, 255, 128), (0, 180, 255), (166, 120, 255), (140, 220, 255) , (255,150,220)]
 moves = [pygame.K_UP, pygame.K_RIGHT, pygame.K_LEFT]
-
-
+# right left down up
+# 3 4 5 6
 class Piece(object):
     rows = 20  
     columns = 10  
@@ -340,140 +340,158 @@ def create_all_possible_moves():
         
         all_possible_moves.append(temp)
     
-    print(len(all_possible_moves))
+    # print(len(all_possible_moves))
 
-    
+# print(moves)
 
 create_all_possible_moves()
-
+# for i in all_possible_moves:
+#     print(i)
+# print(all_possible_moves)
 def model(WeightedBlocks, Roughness, ClearableLine, LinesCleared, current_piece, grid, locked_positions, Score, cleared_lines):
-    random.shuffle(moves)
+    # random.shuffle(moves)
     
     
     rough_score = 0
     # possible_moves = []
     possible_rotations = 0
     
+    # evaluate new pieces we can get after a rotation, like rotating doesn't do anything
+    # to plus and square
     for x,y in shape_rotation:
         if(x == current_piece.shape):
             possible_rotations = y
+            break
 
     # execute all moves in order with one rotation at a time, 
     # its like a new piece only and compare the feature changes
-    
-    for rotation in range(possible_rotations):
+    for _ in range(possible_rotations):
+        rough_scores = []
+        
         for possible_moves in all_possible_moves:
-            rough_scores = []
+            buffer_grid = copy.deepcopy(grid)
+            buffer_locked_positions = copy.deepcopy(locked_positions)
+            buffer_Score = Score
+            buffer_cleared_lines = cleared_lines
             
-            
+            rough_score = 0
+            for move in possible_moves:
+                
+                # weights can be plus minus, chill
+                
+                # run the move, and compare initial and final states
+                # make a buffer state with new locked positions, without the need for any display or colors
+                # only locked positions are needed to know the state na
 
-    
-    
-    for move in moves:
-        if(check_valid_move(move, current_piece) == 1):
-            possible_moves.append(move)
-    if(len(possible_moves) == 0):
-        possible_moves = moves
-            
-    max = [0,random.choices(possible_moves, weights=[1 for i in range(len(possible_moves))], k=1)[0]]
-    
-    # check if move is possible or not, remove that move if not possible
-    
-    for move in possible_moves:
-        # weights can be plus minus, chill
-        
-        # run the move, and compare initial and final states
-        # make a buffer state with new locked positions, without the need for any display or colors
-        # only locked positions are needed to know the state na
-        
-        
-        buffer_grid = copy.deepcopy(grid)
-        buffer_locked_positions = copy.deepcopy(locked_positions)
-        buffer_Score = Score
-        buffer_cleared_lines = cleared_lines
-
-        game_over = False
-
-        # Execute the move
-        if move == pygame.K_LEFT:
-            current_piece.x -= 1
-            if not valid_space(current_piece, grid):
-                current_piece.x += 1
-        elif move == pygame.K_RIGHT:
-            current_piece.x += 1
-            if not valid_space(current_piece, grid):
-                current_piece.x -= 1
-        elif move == pygame.K_UP:
-            current_piece.rotation = (current_piece.rotation + 1) % len(current_piece.shape)
-            if not valid_space(current_piece, grid):
-                current_piece.rotation = (current_piece.rotation - 1) % len(current_piece.shape)
-        elif move == pygame.K_DOWN:
-            current_piece.y += 1
-            if not valid_space(current_piece, grid):
-                current_piece.y -= 1
-
-        # Move down until locked
-        # happening immediately, delay the timing
-        clock = pygame.time.Clock()
-        fall_time = 0
-
-        while True:
-            grid = create_grid(locked_positions)
-            fall_speed = 0.05  # Adjust fall speed as needed
-
-            fall_time += clock.get_rawtime()
-            clock.tick()
-
-            if fall_time / 100 >= fall_speed:
-                fall_time = 0
+                game_over = False
+                change_piece = False
+                
+                
                 current_piece.y += 1
-                if not valid_space(current_piece, grid) and current_piece.y > 0:
+                if not (valid_space(current_piece, grid)) and current_piece.y > 0:
                     current_piece.y -= 1
-                    
-                    # Check for game over
-                    if current_piece.y < 1:
-                        game_over = True
+                    change_piece = True
+                
+                # Execute the move
+                if move == pygame.K_LEFT:
+                    current_piece.x -= 1
+                    if not valid_space(current_piece, grid):
+                        current_piece.x += 1
+                elif move == pygame.K_RIGHT:
+                    current_piece.x += 1
+                    if not valid_space(current_piece, grid):
+                        current_piece.x -= 1
+                
+                elif move == pygame.K_DOWN:
+                    current_piece.y += 1
+                    if not valid_space(current_piece, grid):
+                        current_piece.y -= 1
+
+                # Clear rows and update score
+                clear_rows(grid, locked_positions, Score, cleared_lines)
+
+                shape_pos = convert_shape_format(current_piece)
+
+        
+                for i in range(len(shape_pos)):
+                    x, y = shape_pos[i]
+                    if y > -1:
+                        grid[y][x] = current_piece.color
+
+            
+                if change_piece:
+                    for pos in shape_pos:
+                        p = (pos[0], pos[1])
+                        locked_positions[p] = current_piece.color
+                    change_piece = False
+                
+                if check_lost(locked_positions):
+                    game_over = True
                     break
-            # Clear rows and update score
-            clear_rows(grid, locked_positions, Score, cleared_lines)
-
+                
+            # only 1 score, difference in respective features where needed
+            if(game_over == False):
+                
+                try:
+                    u1 = getWeightedBlocks(buffer_locked_positions)
+                    u2 = getRoughness(buffer_locked_positions)
+                    u3 = getClearableLine(buffer_locked_positions)
+                    
+                    v1 = getWeightedBlocks(locked_positions)
+                    v2 = getRoughness(locked_positions)
+                    v3 = getClearableLine(locked_positions)
+                    
+                    abs1 = abs(v1 - u1)
+                    abs2 = abs(v2 - u2)
+                    abs3 = abs(v3 - u3)
+                    
+                    rough_score = abs1*WeightedBlocks + abs2*Roughness + abs3*ClearableLine + cleared_lines*LinesCleared
+                
+                except Exception as e:
+                    print(f"Error calculating rough score: {e}")
+                    rough_score = 0 
+                    
+            else:
+                rough_score = 0
+            
+            # Restore the buffers
+            try:
+                grid = buffer_grid
+                locked_positions = buffer_locked_positions
+                Score = buffer_Score
+                cleared_lines = buffer_cleared_lines
+            except Exception as e:
+                print(f"Error restoring buffers: {e}")
+            
+            try:
+                rough_scores.append(rough_score)
+            except Exception as e:
+                print(f"Error appending rough score: {e}")
 
         
-
+        # rotate
+        try:
+            possible_moves.pop()
+            possible_moves.insert(0, pygame.K_UP)
+        except Exception as e:
+            print(f"Error rotating possible moves: {e}")
+ 
+    try:
+        # consider rotation, len = possible_rotn * all_possible_moves
+        max_index = rough_scores.index(max(rough_scores))
+        rotated_amount = int(max_index / len(all_possible_moves))
         
-        if check_lost(locked_positions):
-            run = False
+        max_index %= len(all_possible_moves)
         
-        # only 1 score, difference in respective features where needed
-        if(game_over == False):
-            
-            
-            u1 = getWeightedBlocks(buffer_locked_positions)
-            u2 = getRoughness(buffer_locked_positions)
-            u3 = getClearableLine(buffer_locked_positions)
-            
-            v1 = getWeightedBlocks(locked_positions)
-            v2 = getRoughness(locked_positions)
-            v3 = getClearableLine(locked_positions)
-            
-            abs1 = abs(v1 - u1)
-            abs2 = abs(v2 - u2)
-            abs3 = abs(v3 - u3)
-            
-            rough_score = abs1*WeightedBlocks + abs2*Roughness + abs3*ClearableLine + cleared_lines*LinesCleared
-            
-            if(rough_score > max[0]):
-                max = [rough_score,move]
-    
-        # Restore the buffers
-        grid = buffer_grid
-        locked_positions = buffer_locked_positions
-        Score = buffer_Score
-        cleared_lines = buffer_cleared_lines
+        key = all_possible_moves[max_index]
         
-
-    
-    key = max[1]
+        for _ in range(rotated_amount):
+            key.pop()
+            key.insert(0, pygame.K_UP)
+        
+    except Exception as e:
+        print(f"Error selecting best moveeee: {e}")
+        key = random.choice(all_possible_moves)
     # print(key)
     return key
 
@@ -507,62 +525,83 @@ def run(genome):
                 current_piece.y -= 1
                 change_piece = True
 
-        
-        
-        if(fall_time % 10 == 1):
-            key = model(genome[0], genome[1], genome[2], genome[3], current_piece, grid, locked_positions, Score, cleared_lines) #CHANGE score[0] to number of lines cleared
+        running_moves = []
+        # running_moves = model(genome[0], genome[1], genome[2], genome[3], current_piece, grid, locked_positions, Score, cleared_lines) #CHANGE score[0] to number of lines cleared
+        running_moves = random.choice(all_possible_moves)
+        print(running_moves[0])
+        # print(pygame.K_LEFT)
+        # key = pygame.K_DOWN
+        for i in range(len(running_moves)):
             
-            if key == pygame.K_LEFT:
-                current_piece.x -= 1
-                if not valid_space(current_piece, grid):
-                    current_piece.x += 1
+            grid = create_grid(locked_positions)
+            fall_time += clock.get_rawtime()
+            clock.tick() # 1 ms
 
-            elif key == pygame.K_RIGHT:
-                current_piece.x += 1
-                if not valid_space(current_piece, grid):
-                    current_piece.x -= 1
-            elif key == pygame.K_UP:
-                # rotate shape
-                current_piece.rotation = current_piece.rotation + 1 % len(current_piece.shape)
-                if not valid_space(current_piece, grid):
-                    current_piece.rotation = current_piece.rotation - 1 % len(current_piece.shape)
-
-            if key == pygame.K_DOWN:
-                # move shape down
+            if fall_time / 100 >= fall_speed:
+                fall_time = 0
                 current_piece.y += 1
-                if not valid_space(current_piece, grid):
+                if not (valid_space(current_piece, grid)) and current_piece.y > 0:
                     current_piece.y -= 1
+                    change_piece = True
+            
+            while(change_piece == False):        
+                # print("HIIIIEEE")
+                key = running_moves[i]
+                print(key)
+                if(fall_time % 10 == 1):
+                    # key = model(genome[0], genome[1], genome[2], genome[3], current_piece, grid, locked_positions, Score, cleared_lines) #CHANGE score[0] to number of lines cleared
+                    
+                    if key == pygame.K_LEFT:
+                        current_piece.x -= 1
+                        if not valid_space(current_piece, grid):
+                            current_piece.x += 1
+
+                    elif key == pygame.K_RIGHT:
+                        current_piece.x += 1
+                        if not valid_space(current_piece, grid):
+                            current_piece.x -= 1
+                    elif key == pygame.K_UP:
+                        # rotate shape
+                        current_piece.rotation = current_piece.rotation + 1 % len(current_piece.shape)
+                        if not valid_space(current_piece, grid):
+                            current_piece.rotation = current_piece.rotation - 1 % len(current_piece.shape)
+
+                    if key == pygame.K_DOWN:
+                        # move shape down
+                        current_piece.y += 1
+                        if not valid_space(current_piece, grid):
+                            current_piece.y -= 1
+                
+                shape_pos = convert_shape_format(current_piece) 
+
         
-        shape_pos = convert_shape_format(current_piece) 
+                for i in range(len(shape_pos)):
+                    x, y = shape_pos[i]
+                    if y > -1:
+                        grid[y][x] = current_piece.color
 
-   
-        for i in range(len(shape_pos)):
-            x, y = shape_pos[i]
-            if y > -1:
-                grid[y][x] = current_piece.color
+            
+                if change_piece:
+                    for pos in shape_pos:
+                        p = (pos[0], pos[1])
+                        locked_positions[p] = current_piece.color
+                    current_piece = next_piece
+                    next_piece = get_shape()
+                    change_piece = False
 
-      
-        if change_piece:
-            for pos in shape_pos:
-                p = (pos[0], pos[1])
-                locked_positions[p] = current_piece.color
-            current_piece = next_piece
-            next_piece = get_shape()
-            change_piece = False
+            
+                    clear_rows(grid, locked_positions,Score,cleared_lines)
 
-    
-            clear_rows(grid, locked_positions,Score,cleared_lines)
+                draw_window(win)
+                score = str(Score[0])
+                draw_right_side(next_piece, win,score)
+                pygame.display.update()
+            
+            
+            
 
-        draw_window(win)
-        score = str(Score[0])
-        draw_right_side(next_piece, win,score)
-        pygame.display.update()
-        
-        
-        
-
-        if check_lost(locked_positions):
-            run = False
+                if check_lost(locked_positions):
+                    run = False
             
     # draw_text_middle("You Lost : " + str(Score[0]), 40, (0, 0, 0), win)
     # pygame.display.update()

@@ -10,7 +10,15 @@ block is located
 
 Let it run the move, then let it fall in test run, evaluate the impact then next move
 
+1. only predict using one move
+2. decide which piece to use of the current by rotating,
+    choose where to let it fall and touch down,
 
+3. try to implement not just inital 9 possible moves
+    to fill gaps it might need to shift mid grid to fit in
+    (all possible moves just became exponential, lmao, but yes still in limit)
+
+4. try to remove redundant moves ig?
 
 The M features are as follows:
 • WeightedBlocks – weighted sum of blocks, where a

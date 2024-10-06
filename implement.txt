@@ -20,6 +20,10 @@ Let it run the move, then let it fall in test run, evaluate the impact then next
 
 4. try to remove redundant moves ig?
 
+Try to change the falltime % 100 == x1
+to prevent clashh or anything
+
+
 The M features are as follows:
 • WeightedBlocks – weighted sum of blocks, where a
 block's weight is the row it's on

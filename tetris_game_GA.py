@@ -512,97 +512,113 @@ def run(genome):
     fall_time = 0
 
     while run:
-        fall_speed = 0.05 # the lesser the faster it falls
+        # fall_speed = 0.05 # the lesser the faster it falls
 
         grid = create_grid(locked_positions)
         fall_time += clock.get_rawtime()
         clock.tick() # 1 ms
 
-        if fall_time / 100 >= fall_speed:
+        if fall_time % 10 == 1:
             fall_time = 0
             current_piece.y += 1
             if not (valid_space(current_piece, grid)) and current_piece.y > 0:
                 current_piece.y -= 1
                 change_piece = True
 
+        # if fall_time % 100 == 1:
+        #     run = False
+
         running_moves = []
         # running_moves = model(genome[0], genome[1], genome[2], genome[3], current_piece, grid, locked_positions, Score, cleared_lines) #CHANGE score[0] to number of lines cleared
-        running_moves = random.choice(all_possible_moves)
-        print(running_moves[0])
+        running_moves = moves
+        # print(running_moves[0])
         # print(pygame.K_LEFT)
         # key = pygame.K_DOWN
+        # print(len(running_moves))
         for i in range(len(running_moves)):
             
-            grid = create_grid(locked_positions)
+            grid = create_grid(locked_positions)    
             fall_time += clock.get_rawtime()
             clock.tick() # 1 ms
 
-            if fall_time / 100 >= fall_speed:
+            
+            
+            
+                
+            if fall_time % 10 == 2:
                 fall_time = 0
                 current_piece.y += 1
                 if not (valid_space(current_piece, grid)) and current_piece.y > 0:
                     current_piece.y -= 1
                     change_piece = True
             
-            while(change_piece == False):        
-                # print("HIIIIEEE")
-                key = running_moves[i]
-                print(key)
-                if(fall_time % 10 == 1):
-                    # key = model(genome[0], genome[1], genome[2], genome[3], current_piece, grid, locked_positions, Score, cleared_lines) #CHANGE score[0] to number of lines cleared
-                    
-                    if key == pygame.K_LEFT:
-                        current_piece.x -= 1
-                        if not valid_space(current_piece, grid):
-                            current_piece.x += 1
-
-                    elif key == pygame.K_RIGHT:
-                        current_piece.x += 1
-                        if not valid_space(current_piece, grid):
-                            current_piece.x -= 1
-                    elif key == pygame.K_UP:
-                        # rotate shape
-                        current_piece.rotation = current_piece.rotation + 1 % len(current_piece.shape)
-                        if not valid_space(current_piece, grid):
-                            current_piece.rotation = current_piece.rotation - 1 % len(current_piece.shape)
-
-                    if key == pygame.K_DOWN:
-                        # move shape down
-                        current_piece.y += 1
-                        if not valid_space(current_piece, grid):
-                            current_piece.y -= 1
+            # print("HIIIIEEE")
+            if(i >= 3):
+                # change_piece = True
+                break
                 
-                shape_pos = convert_shape_format(current_piece) 
+            try:
+                key = running_moves[i]
+            except Exception as e:
+                print(f"Error in key: {e} with i = {i}")
+                break
+            # print(i)
+            # print(key)
+            if(fall_time % 10 == 3):
+                # key = model(genome[0], genome[1], genome[2], genome[3], current_piece, grid, locked_positions, Score, cleared_lines) #CHANGE score[0] to number of lines cleared
+                
+                if key == pygame.K_LEFT:
+                    current_piece.x -= 1
+                    if not valid_space(current_piece, grid):
+                        current_piece.x += 1
+
+                elif key == pygame.K_RIGHT:
+                    current_piece.x += 1
+                    if not valid_space(current_piece, grid):
+                        current_piece.x -= 1
+                elif key == pygame.K_UP:
+                    # rotate shape
+                    current_piece.rotation = current_piece.rotation + 1 % len(current_piece.shape)
+                    if not valid_space(current_piece, grid):
+                        current_piece.rotation = current_piece.rotation - 1 % len(current_piece.shape)
+
+                if key == pygame.K_DOWN:
+                    # move shape down
+                    current_piece.y += 1
+                    if not valid_space(current_piece, grid):
+                        current_piece.y -= 1
+            
+            shape_pos = convert_shape_format(current_piece) 
+
+    
+            for i in range(len(shape_pos)):
+                x, y = shape_pos[i]
+                if y > -1:
+                    grid[y][x] = current_piece.color
 
         
-                for i in range(len(shape_pos)):
-                    x, y = shape_pos[i]
-                    if y > -1:
-                        grid[y][x] = current_piece.color
+            if change_piece:
+                for pos in shape_pos:
+                    p = (pos[0], pos[1])
+                    locked_positions[p] = current_piece.color
+                current_piece = next_piece
+                next_piece = get_shape()
+                change_piece = False
 
-            
-                if change_piece:
-                    for pos in shape_pos:
-                        p = (pos[0], pos[1])
-                        locked_positions[p] = current_piece.color
-                    current_piece = next_piece
-                    next_piece = get_shape()
-                    change_piece = False
+        
+                clear_rows(grid, locked_positions,Score,cleared_lines)
 
-            
-                    clear_rows(grid, locked_positions,Score,cleared_lines)
+            draw_window(win)
+            score = str(Score[0])
+            draw_right_side(next_piece, win,score)
+            pygame.display.update()
+        
+        
+        
 
-                draw_window(win)
-                score = str(Score[0])
-                draw_right_side(next_piece, win,score)
-                pygame.display.update()
-            
-            
-            
-
-                if check_lost(locked_positions):
-                    run = False
-            
+            if check_lost(locked_positions):
+                run = False
+        
     # draw_text_middle("You Lost : " + str(Score[0]), 40, (0, 0, 0), win)
     # pygame.display.update()
     # pygame.time.delay(2000)

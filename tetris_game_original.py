@@ -254,7 +254,7 @@ def main():
         fall_time += clock.get_rawtime()
         clock.tick()
 
-        if fall_time / 1000 >= fall_speed:
+        if fall_time % 100 == 1:
             fall_time = 0
             current_piece.y += 1
             if not (valid_space(current_piece, grid)) and current_piece.y > 0:

@@ -23,6 +23,17 @@ Let it run the move, then let it fall in test run, evaluate the impact then next
 Try to change the falltime % 100 == x1
 to prevent clashh or anything
 
+# WeightedBlocks 0
+# Roughness      1
+# ClearableLine  2
+# LinesCleared   3
+# ConnectedHoles 4
+## Blocks        5
+# DeepestWell    6
+# ColHoles       7
+# PitHolePercent 8
+# Tetrises       9
+
 
 The M features are as follows:
 • WeightedBlocks – weighted sum of blocks, where a
@@ -33,18 +44,53 @@ adjacent column heights
 potentially clearable by a single I (straight) piece
 • LinesCleared – number of lines currently cleared
 during the game
-
-
 • ConnectedHoles – number of vertically connected
 holes
-• Tetrises – number of tetrises currently made during
-the game
-• PitHolePercent – number of pits / (number of pits +
-number of holes)
+
+• Blocks – number of blocks on the board
+getBlocks(locked_positions)
+// number of unit (1x1) of block
+
+
+
 • DeepestWell – the row containing the lowest unfilled
 block that is not a hole
-• Blocks – number of blocks on the board
+getDeepestWell(locked_positions={})
+
+
 • ColHoles – number of columns containing at least one
 hole
+getColHoles(locked_positions={})
+
+• PitHolePercent – number of pits / (number of pits +
+number of holes)
+getPitHolePercent(locked_positions={})
+
+• Tetrises – number of tetrises currently made during
+the game, (cleared 4 lines in one move)
+getTetrises(locked_positions={})
 
 
+1st change in genome.append
+(passing into func automated as tupple in the run())
+
+2nd create appropriate function
+
+3rd change in model function
+    assign
+    u_n, v_n, abs_n, (cleared lines const, so +1 after 3 due to that)
+4th create new elemets_n in main, + e_n and insert into newGen
+
+
+thing to take care,
+since few elements might be in scale
+of 1000 while other <20
+
+hmmmm, is it problem tho?
+maybe notttt
+
+(-1,1)
+reverse is enough to reciprocal
+and put in this
+
+OH maybe (-1,1) are more sadder

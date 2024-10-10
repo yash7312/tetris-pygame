@@ -275,6 +275,89 @@ def getClearableLine(locked_positions={}):
     
     return count
 
+def getConnectedHoles(locked_positions={}):
+    holes = 0
+    for x in range(10):
+        column_holes = 0
+        block_found = False
+        for y in range(20):
+            if (x, y) in locked_positions:
+                block_found = True
+            elif block_found and (x, y) not in locked_positions:
+                # Check if there is a block below the hole
+                for k in range(y + 1, 20):
+                    if (x, k) in locked_positions:
+                        column_holes += 1
+                        break
+    holes += column_holes
+    return holes
+
+def getBlocks(locked_positions={}):
+    blocks = 0
+    for pos in locked_positions:
+        if locked_positions[pos] != (255, 255, 255):  # Check if the position is not white (empty)
+            blocks += 1
+    return blocks
+
+def getDeepestWell(locked_positions={}):
+    deepest_well = 0
+    for x in range(10):
+        column_depth = 0
+        for y in range(20):
+            if (x, y) not in locked_positions:
+                column_depth = y
+            else:
+                break
+        deepest_well = max(deepest_well, column_depth)
+    return deepest_well
+    
+def getColHoles(locked_positions={}):
+    col_holes = 0
+    for x in range(10):
+        for y in range(20):
+            if (x, y) in locked_positions:
+                for z in range(y + 1, 20):
+                    if (x, z) not in locked_positions:
+                        col_holes += 1
+                        y = 20
+                        break
+    return col_holes
+
+def getPitHolePercent(locked_positions={}):
+    pits = 0
+    holes = 0
+    for x in range(10):
+        column_pits = 0
+        column_holes = 0
+        block_found = False
+        for y in range(20):
+            if (x, y) in locked_positions:
+                block_found = True
+            elif block_found and (x, y) not in locked_positions:
+                column_holes += 1
+            elif not block_found and (x, y) not in locked_positions:
+                column_pits += 1
+        pits += column_pits
+        holes += column_holes
+    if pits + holes == 0:
+        return 0
+    return pits / (pits + holes)
+
+
+# use this to keep track if tetrise formed in current run, like number of cleared lines
+def getTetrises(locked_positions={}):
+    tetrises = 0
+    for i in range(len(grid) - 1, -1, -1):
+        row = grid[i]
+        if (255, 255, 255) not in row:
+            if i >= 3:
+                above_row = grid[i-1]
+                above_above_row = grid[i-2]
+                above_above_above_row = grid[i-3]
+                if (255, 255, 255) not in above_row and (255, 255, 255) not in above_above_row and (255, 255, 255) not in above_above_above_row:
+                    tetrises += 1
+    return tetrises
+
 modulo = 5
 num_child = 80
 num_gen = 30
@@ -282,7 +365,16 @@ num_gen = 30
 def main():
     genomes = []
     for s in range(num_child):
-        genomes.append((random.uniform(-1,0),random.uniform(-1,0),random.uniform(-1,1),random.uniform(0,1)))
+        genomes.append((random.uniform(-1,0),  # WeightedBlocks 0
+                        random.uniform(-1,0),  # Roughness      1
+                        random.uniform(-1,1),  # ClearableLine  2
+                        random.uniform( 0,1),  # LinesCleared   3
+                        random.uniform(-1,1),  # ConnectedHoles 4
+                        random.uniform(-1,1),  ## Blocks        5
+                        random.uniform(-1,1),  # DeepestWell    6
+                        random.uniform(-1,1),  # ColHoles       7
+                        random.uniform(-1,1),  # PitHolePercent 8
+                        random.uniform(-1,1))) # Tetrises       9
     
     for i in range(num_gen):
         print(f"GENERATION: {i}")
@@ -290,6 +382,7 @@ def main():
         # print("KHTMMMMM")
         for genome in genomes:
             # print(len(genome))
+            print(genome)
             RankedGenomes.append((run(genome), genome)) #score, genome_vars
 
         RankedGenomes.sort(reverse=True)
@@ -303,21 +396,42 @@ def main():
         elements2 = []
         elements3 = []
         elements4 = []
+        elements5 = []
+        elements6 = []
+        elements7 = []
+        elements8 = []
+        elements9 = []
+        elements10 = []
+        
         
         for s in bestGenomes:
             elements1.append(s[1][0])
             elements2.append(s[1][1])
             elements3.append(s[1][2])
             elements4.append(s[1][3])
+            elements5.append(s[1][0])
+            elements6.append(s[1][1])
+            elements7.append(s[1][2])
+            elements8.append(s[1][3])
+            elements9.append(s[1][0])
+            elements10.append(s[1][1])
+            
             
         newGen = []
         for _ in range(num_child):
-            e1 = random.choice(elements1) * random.uniform(0.99,1.01)
-            e2 = random.choice(elements2) * random.uniform(0.99,1.01)
-            e3 = random.choice(elements3) * random.uniform(0.99,1.01)
-            e4 = random.choice(elements4) * random.uniform(0.99,1.01)
+            e1 = random.choice(elements1) * random.uniform(0.999,1.001)
+            e2 = random.choice(elements2) * random.uniform(0.999,1.001)
+            e3 = random.choice(elements3) * random.uniform(0.999,1.001)
+            e4 = random.choice(elements4) * random.uniform(0.999,1.001)
+            e5 = random.choice(elements5) * random.uniform(0.999,1.001)
+            e6 = random.choice(elements6) * random.uniform(0.999,1.001)
+            e7 = random.choice(elements7) * random.uniform(0.999,1.001)
+            e8 = random.choice(elements8) * random.uniform(0.999,1.001)
+            e9 = random.choice(elements9) * random.uniform(0.999,1.001)
+            e10 = random.choice(elements10) * random.uniform(0.999,1.001)
             
-            newGen.append((e1,e2,e3,e4))
+            
+            newGen.append((e1,e2,e3,e4,e5,e6,e7,e8,e9,e10))
     
         genomes = newGen
     
@@ -382,7 +496,19 @@ create_all_possible_moves()
 # for i in all_possible_moves:
 #     print(i)
 # print(all_possible_moves)
-def model(WeightedBlocks, Roughness, ClearableLine, LinesCleared, current_piece, grid, locked_positions, Score, cleared_lines):
+def model(tupple, current_piece, grid, locked_positions, Score, cleared_lines):
+    WeightedBlocks = tupple[0]
+    Roughness = tupple[1]
+    ClearableLine = tupple[2]
+    LinesCleared = tupple[3]
+    ConnectedHoles = tupple[4]
+
+    Blocks = tupple[5]
+    DeepestWell = tupple[6]
+    ColHoles = tupple[7]
+    PitHolePercent = tupple[8]
+    Tetrises = tupple[9]
+    
     # random.shuffle(moves)
     rough_score = 0
     # possible_moves = []
@@ -482,16 +608,41 @@ def model(WeightedBlocks, Roughness, ClearableLine, LinesCleared, current_piece,
                         u1 = getWeightedBlocks(buffer_locked_positions)
                         u2 = getRoughness(buffer_locked_positions)
                         u3 = getClearableLine(buffer_locked_positions)
+                        u4 = getConnectedHoles(buffer_locked_positions)
+                        u5 = getBlocks(locked_positions)
+                        u6 = getDeepestWell(locked_positions)
+                        u7 = getColHoles(locked_positions)
+                        u8 = getPitHolePercent(locked_positions)
+                        # u9 is tetrises but similar treatement with cleared lines
+                        
                         
                         v1 = getWeightedBlocks(locked_positions)
                         v2 = getRoughness(locked_positions)
                         v3 = getClearableLine(locked_positions)
+                        v4 = getConnectedHoles(locked_positions)
+                        v5 = getBlocks(locked_positions)
+                        v6 = getDeepestWell(locked_positions)
+                        v7 = getColHoles(locked_positions)
+                        v8 = getPitHolePercent(locked_positions)
                         
                         abs1 = abs(v1 - u1)
                         abs2 = abs(v2 - u2)
                         abs3 = abs(v3 - u3)
+                        abs4 = abs(v4 - u4)
+                        abs5 = abs(v5 - u5)
+                        abs6 = abs(v6 - u6)
+                        abs7 = abs(v7 - u7)
+                        abs8 = abs(v8 - u8)
                         
-                        rough_score = abs1*WeightedBlocks + abs2*Roughness + abs3*ClearableLine + cleared_lines*LinesCleared
+                        rough_score += abs1*WeightedBlocks 
+                        rough_score += abs2*Roughness
+                        rough_score += abs3*ClearableLine
+                        rough_score += cleared_lines*LinesCleared
+                        rough_score += abs4*ConnectedHoles
+                        rough_score += abs5*Blocks
+                        rough_score += abs6*DeepestWell
+                        rough_score += abs7*ColHoles
+                        rough_score += abs8*PitHolePercent
                     
                     except Exception as e:
                         print(f"Error calculating rough score: {e}")
@@ -580,10 +731,13 @@ def run(genome):
         #     run = False
 
         running_moves = []
-        tupple = []
+        
+        tupple = [0] * len(genome)
+        # print(len(genome))
         for i in range(len(genome)):
             tupple[i] = genome[i]
-        running_moves = model(genome[0], genome[1], genome[2], genome[3], current_piece, grid, locked_positions, Score, cleared_lines) #CHANGE score[0] to number of lines cleared
+            
+        running_moves = model(tupple, current_piece, grid, locked_positions, Score, cleared_lines) #CHANGE score[0] to number of lines cleared
         # running_moves = moves
         # print(running_moves[0])
         # print(pygame.K_LEFT)

@@ -359,10 +359,11 @@ def getTetrises(locked_positions={}):
     return tetrises
 
 modulo = 5
-num_child = 80
-num_gen = 30
+num_child = 0
+num_gen = 0
 
 def main():
+    run((-0.007507249887295392, -0.10698963555753394, 0.25222830968334836, 0.32430588907638563, -0.007501497398399344, -0.10696146268886685, 0.2523695116026171, 0.3244348314506573, -0.007503637271966925, -0.10696089055761533))
     genomes = []
     for s in range(num_child):
         genomes.append((random.uniform(-1,0),  # WeightedBlocks 0
@@ -847,7 +848,7 @@ def main_menu():
     while run:
         if clk % 501 == 500 :
             color = random.choice(shape_colors)
-        # # win.fill(color)
+        # win.fill(color)
         draw_main_menu(60,(255,255,255),win)
         pygame.display.update()
         for event in pygame.event.get():

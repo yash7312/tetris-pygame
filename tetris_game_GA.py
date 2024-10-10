@@ -275,17 +275,51 @@ def getClearableLine(locked_positions={}):
     
     return count
 
-
+modulo = 5
+num_child = 80
+num_gen = 30
 
 def main():
     genomes = []
-    for s in range(10 ):
-        genomes.append((random.uniform(-1,1),random.uniform(-1,1),random.uniform(-1,1),random.uniform(-1,1)))
+    for s in range(num_child):
+        genomes.append((random.uniform(-1,0),random.uniform(-1,0),random.uniform(-1,1),random.uniform(0,1)))
     
-    RankedGenomes = []
+    for i in range(num_gen):
+        print(f"GENERATION: {i}")
+        RankedGenomes = []
+        # print("KHTMMMMM")
+        for genome in genomes:
+            # print(len(genome))
+            RankedGenomes.append((run(genome), genome)) #score, genome_vars
+
+        RankedGenomes.sort(reverse=True)
+        
+        # print(f"==== Gen  {i} {run((RankedGenomes[0][1][0],RankedGenomes[0][1][1],RankedGenomes[0][1][2]))} best solutions === ")
+        # print(RankedGenomes[0])
+        
+        bestGenomes = RankedGenomes[:10]
+        
+        elements1 = []
+        elements2 = []
+        elements3 = []
+        elements4 = []
+        
+        for s in bestGenomes:
+            elements1.append(s[1][0])
+            elements2.append(s[1][1])
+            elements3.append(s[1][2])
+            elements4.append(s[1][3])
+            
+        newGen = []
+        for _ in range(num_child):
+            e1 = random.choice(elements1) * random.uniform(0.99,1.01)
+            e2 = random.choice(elements2) * random.uniform(0.99,1.01)
+            e3 = random.choice(elements3) * random.uniform(0.99,1.01)
+            e4 = random.choice(elements4) * random.uniform(0.99,1.01)
+            
+            newGen.append((e1,e2,e3,e4))
     
-    for genome in genomes:
-        RankedGenomes.append((run(genome), genome)) #score, genome_vars
+        genomes = newGen
     
 
 def check_valid_move(move, current_piece):
@@ -350,14 +384,17 @@ create_all_possible_moves()
 # print(all_possible_moves)
 def model(WeightedBlocks, Roughness, ClearableLine, LinesCleared, current_piece, grid, locked_positions, Score, cleared_lines):
     # random.shuffle(moves)
-    
-    
     rough_score = 0
     # possible_moves = []
     possible_rotations = 0
     
+    clock = pygame.time.Clock()
+    fall_time = 0
+    
     # evaluate new pieces we can get after a rotation, like rotating doesn't do anything
     # to plus and square
+    # print(current_piece.shape)
+    # print()
     for x,y in shape_rotation:
         if(x == current_piece.shape):
             possible_rotations = y
@@ -369,104 +406,114 @@ def model(WeightedBlocks, Roughness, ClearableLine, LinesCleared, current_piece,
         rough_scores = []
         
         for possible_moves in all_possible_moves:
-            buffer_grid = copy.deepcopy(grid)
-            buffer_locked_positions = copy.deepcopy(locked_positions)
-            buffer_Score = Score
-            buffer_cleared_lines = cleared_lines
             
-            rough_score = 0
-            for move in possible_moves:
+            fall_time += clock.get_rawtime()
+            clock.tick()
+            # print("HIEEEEE")
+            if(fall_time % 1 == 1):
+                fall_time = 0
                 
-                # weights can be plus minus, chill
+                buffer_grid = copy.deepcopy(grid)
+                buffer_locked_positions = copy.deepcopy(locked_positions)
+                buffer_Score = Score
+                buffer_cleared_lines = cleared_lines
+                buffer_piece = current_piece
                 
-                # run the move, and compare initial and final states
-                # make a buffer state with new locked positions, without the need for any display or colors
-                # only locked positions are needed to know the state na
+                rough_score = 0
+                # print("HIEEEEE")
+                for move in possible_moves:
+                    # print("HIEEEEE")
+                    # weights can be plus minus, chill
+                    
+                    # run the move, and compare initial and final states
+                    # make a buffer state with new locked positions, without the need for any display or colors
+                    # only locked positions are needed to know the state na
 
-                game_over = False
-                change_piece = False
-                
-                
-                current_piece.y += 1
-                if not (valid_space(current_piece, grid)) and current_piece.y > 0:
-                    current_piece.y -= 1
-                    change_piece = True
-                
-                # Execute the move
-                if move == pygame.K_LEFT:
-                    current_piece.x -= 1
-                    if not valid_space(current_piece, grid):
-                        current_piece.x += 1
-                elif move == pygame.K_RIGHT:
-                    current_piece.x += 1
-                    if not valid_space(current_piece, grid):
-                        current_piece.x -= 1
-                
-                elif move == pygame.K_DOWN:
-                    current_piece.y += 1
-                    if not valid_space(current_piece, grid):
-                        current_piece.y -= 1
-
-                # Clear rows and update score
-                clear_rows(grid, locked_positions, Score, cleared_lines)
-
-                shape_pos = convert_shape_format(current_piece)
-
-        
-                for i in range(len(shape_pos)):
-                    x, y = shape_pos[i]
-                    if y > -1:
-                        grid[y][x] = current_piece.color
-
-            
-                if change_piece:
-                    for pos in shape_pos:
-                        p = (pos[0], pos[1])
-                        locked_positions[p] = current_piece.color
+                    game_over = False
                     change_piece = False
+                    
+                    
+                    current_piece.y += 1
+                    if not (valid_space(current_piece, grid)) and current_piece.y > 0:
+                        current_piece.y -= 1
+                        change_piece = True
+                    
+                    # Execute the move
+                    if move == pygame.K_LEFT:
+                        current_piece.x -= 1
+                        if not valid_space(current_piece, grid):
+                            current_piece.x += 1
+                    elif move == pygame.K_RIGHT:
+                        current_piece.x += 1
+                        if not valid_space(current_piece, grid):
+                            current_piece.x -= 1
+                    
+                    elif move == pygame.K_DOWN:
+                        current_piece.y += 1
+                        if not valid_space(current_piece, grid):
+                            current_piece.y -= 1
+
+                    # Clear rows and update score
+                    clear_rows(grid, locked_positions, Score, cleared_lines)
+
+                    shape_pos = convert_shape_format(current_piece)
+
+            
+                    for i in range(len(shape_pos)):
+                        x, y = shape_pos[i]
+                        if y > -1:
+                            grid[y][x] = current_piece.color
+
                 
-                if check_lost(locked_positions):
-                    game_over = True
-                    break
+                    if change_piece:
+                        for pos in shape_pos:
+                            p = (pos[0], pos[1])
+                            locked_positions[p] = current_piece.color
+                        change_piece = False
+                    
+                    if check_lost(locked_positions):
+                        game_over = True
+                        break
+                    
+                # only 1 score, difference in respective features where needed
+                if(game_over == False):
+                    
+                    try:
+                        u1 = getWeightedBlocks(buffer_locked_positions)
+                        u2 = getRoughness(buffer_locked_positions)
+                        u3 = getClearableLine(buffer_locked_positions)
+                        
+                        v1 = getWeightedBlocks(locked_positions)
+                        v2 = getRoughness(locked_positions)
+                        v3 = getClearableLine(locked_positions)
+                        
+                        abs1 = abs(v1 - u1)
+                        abs2 = abs(v2 - u2)
+                        abs3 = abs(v3 - u3)
+                        
+                        rough_score = abs1*WeightedBlocks + abs2*Roughness + abs3*ClearableLine + cleared_lines*LinesCleared
+                    
+                    except Exception as e:
+                        print(f"Error calculating rough score: {e}")
+                        rough_score = 0 
+                        
+                else:
+                    rough_score = 0
                 
-            # only 1 score, difference in respective features where needed
-            if(game_over == False):
+                # Restore the buffers
+                try:
+                    grid = buffer_grid
+                    locked_positions = buffer_locked_positions
+                    Score = buffer_Score
+                    cleared_lines = buffer_cleared_lines
+                    current_piece = buffer_piece
+                except Exception as e:
+                    print(f"Error restoring buffers: {e}")
                 
                 try:
-                    u1 = getWeightedBlocks(buffer_locked_positions)
-                    u2 = getRoughness(buffer_locked_positions)
-                    u3 = getClearableLine(buffer_locked_positions)
-                    
-                    v1 = getWeightedBlocks(locked_positions)
-                    v2 = getRoughness(locked_positions)
-                    v3 = getClearableLine(locked_positions)
-                    
-                    abs1 = abs(v1 - u1)
-                    abs2 = abs(v2 - u2)
-                    abs3 = abs(v3 - u3)
-                    
-                    rough_score = abs1*WeightedBlocks + abs2*Roughness + abs3*ClearableLine + cleared_lines*LinesCleared
-                
+                    rough_scores.append(rough_score)
                 except Exception as e:
-                    print(f"Error calculating rough score: {e}")
-                    rough_score = 0 
-                    
-            else:
-                rough_score = 0
-            
-            # Restore the buffers
-            try:
-                grid = buffer_grid
-                locked_positions = buffer_locked_positions
-                Score = buffer_Score
-                cleared_lines = buffer_cleared_lines
-            except Exception as e:
-                print(f"Error restoring buffers: {e}")
-            
-            try:
-                rough_scores.append(rough_score)
-            except Exception as e:
-                print(f"Error appending rough score: {e}")
+                    print(f"Error appending rough score: {e}")
 
         
         # rotate
@@ -476,9 +523,11 @@ def model(WeightedBlocks, Roughness, ClearableLine, LinesCleared, current_piece,
         except Exception as e:
             print(f"Error rotating possible moves: {e}")
  
+    # print("POTATO", (rough_scores))
     try:
         # consider rotation, len = possible_rotn * all_possible_moves
         max_index = rough_scores.index(max(rough_scores))
+        # print(max(rough_score))
         rotated_amount = int(max_index / len(all_possible_moves))
         
         max_index %= len(all_possible_moves)
@@ -490,10 +539,12 @@ def model(WeightedBlocks, Roughness, ClearableLine, LinesCleared, current_piece,
             key.insert(0, pygame.K_UP)
         
     except Exception as e:
-        print(f"Error selecting best moveeee: {e}")
+        # print(f"Error selecting best moveeee: {e}")
         key = random.choice(all_possible_moves)
     # print(key)
     return key
+
+
 
 
 
@@ -513,12 +564,12 @@ def run(genome):
 
     while run:
         # fall_speed = 0.05 # the lesser the faster it falls
-
+        # print(clock.get_rawtime())
         grid = create_grid(locked_positions)
         fall_time += clock.get_rawtime()
         clock.tick() # 1 ms
 
-        if fall_time % 10 == 1:
+        if fall_time % modulo == 1:
             fall_time = 0
             current_piece.y += 1
             if not (valid_space(current_piece, grid)) and current_piece.y > 0:
@@ -529,12 +580,18 @@ def run(genome):
         #     run = False
 
         running_moves = []
-        # running_moves = model(genome[0], genome[1], genome[2], genome[3], current_piece, grid, locked_positions, Score, cleared_lines) #CHANGE score[0] to number of lines cleared
-        running_moves = moves
+        tupple = []
+        for i in range(len(genome)):
+            tupple[i] = genome[i]
+        running_moves = model(genome[0], genome[1], genome[2], genome[3], current_piece, grid, locked_positions, Score, cleared_lines) #CHANGE score[0] to number of lines cleared
+        # running_moves = moves
         # print(running_moves[0])
         # print(pygame.K_LEFT)
         # key = pygame.K_DOWN
         # print(len(running_moves))
+        
+        
+        #running throught moves, everything happens here
         for i in range(len(running_moves)):
             
             grid = create_grid(locked_positions)    
@@ -545,7 +602,7 @@ def run(genome):
             
             
                 
-            if fall_time % 10 == 2:
+            if fall_time % modulo == 2:
                 fall_time = 0
                 current_piece.y += 1
                 if not (valid_space(current_piece, grid)) and current_piece.y > 0:
@@ -564,7 +621,7 @@ def run(genome):
                 break
             # print(i)
             # print(key)
-            if(fall_time % 10 == 3):
+            if(fall_time % modulo == 3):
                 # key = model(genome[0], genome[1], genome[2], genome[3], current_piece, grid, locked_positions, Score, cleared_lines) #CHANGE score[0] to number of lines cleared
                 
                 if key == pygame.K_LEFT:
@@ -636,7 +693,7 @@ def main_menu():
     while run:
         if clk % 501 == 500 :
             color = random.choice(shape_colors)
-        # win.fill(color)
+        # # win.fill(color)
         draw_main_menu(60,(255,255,255),win)
         pygame.display.update()
         for event in pygame.event.get():
@@ -648,6 +705,8 @@ def main_menu():
                     main()
                 elif  event.key == pygame.K_ESCAPE :
                     run = False
+        # main()
+        # run = False
         clk+=1            
     pygame.quit()
 

@@ -383,7 +383,7 @@ def main():
         # print("KHTMMMMM")
         for genome in genomes:
             # print(len(genome))
-            print(genome)
+            # print(genome)
             RankedGenomes.append((run(genome), genome)) #score, genome_vars
 
         RankedGenomes.sort(reverse=True)
@@ -829,56 +829,22 @@ def run(genome):
         
                 clear_rows(grid, locked_positions,Score,cleared_lines)
 
-            draw_window(win)
-            score = str(Score[0])
-            draw_right_side(next_piece, win,score)
-            pygame.display.update()
-        
-        
-        
-
             if check_lost(locked_positions):
                 run = False
-        
-    # draw_text_middle("You Lost : " + str(Score[0]), 40, (0, 0, 0), win)
-    # pygame.display.update()
-    # pygame.time.delay(2000)
+
     
     return Score[0]
-
-
-
-
 
 def main_menu():
     clk = 0
     run = True
-    color = (0,0,0)
+    
     while run:
-        if clk % 501 == 500 :
-            color = random.choice(shape_colors)
-        # win.fill(color)
-        draw_main_menu(60,(255,255,255),win)
-        pygame.display.update()
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run = False
 
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE :
-                    main()
-                elif  event.key == pygame.K_ESCAPE :
-                    run = False
-        # main()
-        # run = False
+        main()
+        run = False
         clk+=1            
     pygame.quit()
-
-
-
-
-win = pygame.display.set_mode((s_width, s_height))
-pygame.display.set_caption('T E T R I S')
 
 main_menu()  
 

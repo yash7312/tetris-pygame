@@ -94,3 +94,38 @@ reverse is enough to reciprocal
 and put in this
 
 OH maybe (-1,1) are more sadder
+
+
+display off? 
+
+comment out following
+
+            # draw_window(win)
+            # score = str(Score[0])
+            # draw_right_side(next_piece, win,score)
+            # pygame.display.update()
+
+    # draw_text_middle("You Lost : " + str(Score[0]), 40, (0, 0, 0), win)
+    # pygame.display.update()
+    # pygame.time.delay(2000)
+
+
+        # draw_main_menu(60,(255,255,255),win)
+        # pygame.display.update()
+        # for event in pygame.event.get():
+        #     if event.type == pygame.QUIT:
+        #         run = False
+
+        #     if event.type == pygame.KEYDOWN:
+        #         if event.key == pygame.K_SPACE :
+        #             main()
+        #         elif  event.key == pygame.K_ESCAPE :
+        #             run = False
+
+# win = pygame.display.set_mode((s_width, s_height))
+# pygame.display.set_caption('T E T R I S')
+
+UNCOMMENT
+
+        main()
+        run = False
